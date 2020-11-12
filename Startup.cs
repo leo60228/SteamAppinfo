@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using AspNetCoreRateLimit;
+using LettuceEncrypt;
 
 namespace SteamAppinfo {
     public class Startup {
@@ -41,7 +43,12 @@ namespace SteamAppinfo {
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 
-            services.AddLettuceEncrypt();
+            var lettuce = services.AddLettuceEncrypt();
+            string persist = Configuration["LettuceEncrypt:PersistPath"];
+            if (persist != null) {
+                string persistPass = Configuration["LettuceEncrypt:PersistPass"];
+                lettuce.PersistDataToDirectory(new DirectoryInfo(persist), persistPass);
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
