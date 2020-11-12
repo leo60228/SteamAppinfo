@@ -40,6 +40,8 @@ namespace SteamAppinfo {
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+
+            services.AddLettuceEncrypt();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

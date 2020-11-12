@@ -55,11 +55,25 @@ name: rec {
         sha512 = "2xzzz4c5rkhvv0g7inkrlgb3lcg7ggcrrl9fz51raf5prim3ir8skf9nfs9q1rqz1qaifiy65sdwlj3drxnjv8jd9xwqakqhggid1n9";
       };
     }
+    { name = "LettuceEncrypt";
+      path = fetchNuGet {
+        baseName = "LettuceEncrypt";
+        version = "1.0.0";
+        sha512 = "07n4b31y97vf7plgjfrqxk0djli8ag7sgdawf3nm9wazwdmcz5phvqdvxk1h9yph01cfc74smidi6z4n1wxzjlqdymqpl5h6hy8f4ac";
+      };
+    }
     { name = "SteamKit2";
       path = fetchNuGet {
         baseName = "SteamKit2";
         version = "2.3.0";
         sha512 = "2wkrigd4j8r9l71f9mvjwjgilnnjr7l06z1ksw9gam4h4c21n5b5y017w3xig8p0blm54q3mng664bxp4rinnni5vcjb5pnh17m0w2v";
+      };
+    }
+    { name = "Certes";
+      path = fetchNuGet {
+        baseName = "Certes";
+        version = "2.3.3";
+        sha512 = "3hydlykgjwi2pqq9kdnbllv0l1zwm40vvx6w4albbwvvnxzcsfmg8pp6ik24ikkvzzz3vbj8lm5177rw39jqwsj4lkhwzv6ymm6v9bb";
       };
     }
     { name = "Microsoft.Extensions.Caching.Abstractions";
@@ -116,6 +130,13 @@ name: rec {
         baseName = "Newtonsoft.Json";
         version = "12.0.3";
         sha512 = "3skbix5pwilpagjs2mvm7z5g1hm0lymbcafc7p0pkm282y219k0xzsq2fyb036lq45myycj9lpsfdfl2szz4i3ck6z8pibr0igncd39";
+      };
+    }
+    { name = "Portable.BouncyCastle";
+      path = fetchNuGet {
+        baseName = "Portable.BouncyCastle";
+        version = "1.8.1.4";
+        sha512 = "10rls702436swf3jaz79shccyb6cdh0wbfkqrkr69lgfw5m6nyb1q3d7k8x5z8g5my6zw7lwgvxzp20sz5xb51waw4w0jg532gcdl4n";
       };
     }
     { name = "protobuf-net";
