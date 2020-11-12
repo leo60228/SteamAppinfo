@@ -1,0 +1,5 @@
+obj/
+bin/
+sentry.bin
+loginkey.bin
+appsettings.Production.json
