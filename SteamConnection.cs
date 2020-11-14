@@ -124,7 +124,7 @@ namespace SteamAppinfo {
 
         void OnLoggedOn(SteamUser.LoggedOnCallback callback) {
             if (callback.Result != EResult.OK) {
-                throw new Exception($"Unable to logon to Steam: {callback.Result} / {callback.ExtendedResult}");
+                throw new WebException($"Unable to logon to Steam: {callback.Result} / {callback.ExtendedResult}");
             }
 
             Logger.LogInformation("Waiting five seconds to receive extra events...");
@@ -163,9 +163,13 @@ namespace SteamAppinfo {
 
             if (resultSet.Complete) {
                 var productInfoCallback = resultSet.Results.First();
-                var productInfo = productInfoCallback.Apps.Values.First();
-                Logger.LogInformation("Got product info!");
-                return productInfo;
+                var productInfo = productInfoCallback.Apps.Values.FirstOrDefault();
+                if (productInfo != null) {
+                    Logger.LogInformation("Got product info!");
+                    return productInfo;
+                } else {
+                    throw new WebException("No product info!");
+                }
             } else if (resultSet.Failed) {
                 var productInfoCallback = resultSet.Results.FirstOrDefault(prodCallback => prodCallback.Apps.ContainsKey(app));
 
@@ -174,7 +178,7 @@ namespace SteamAppinfo {
                     Logger.LogWarning("Received product info with server-side error");
                     return productInfo;
                 } else {
-                    throw new Exception("Server side error!");
+                    throw new WebException("Server side error!");
                 }
             } else {
                 var productInfoCallback = resultSet.Results.FirstOrDefault(prodCallback => prodCallback.Apps.ContainsKey(app));
@@ -184,7 +188,7 @@ namespace SteamAppinfo {
                     Logger.LogWarning("Received product info with timeout");
                     return productInfo;
                 } else {
-                    throw new TimeoutException("Timed out!");
+                    throw new WebException(new TimeoutException("Timed out!"));
                 }
             }
         }
