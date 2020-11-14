@@ -25,6 +25,7 @@ namespace SteamAppinfo {
         SteamApps steamApps;
 
         volatile bool loggedIn;
+        volatile bool disconnected = false;
 
         public SteamConnection(ILogger<SteamConnection> logger, IConfiguration configuration) {
             Logger = logger;
@@ -47,7 +48,9 @@ namespace SteamAppinfo {
                 steamApps = steamClient.GetHandler<SteamApps>();
 
                 manager.Subscribe<SteamClient.ConnectedCallback>(OnConnected);
+                manager.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);
                 manager.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
+                manager.Subscribe<SteamUser.LoggedOffCallback>(OnLoggedOff);
                 manager.Subscribe<SteamUser.UpdateMachineAuthCallback>(OnMachineAuth);
                 manager.Subscribe<SteamUser.LoginKeyCallback>(OnLoginKey);
 
@@ -66,6 +69,8 @@ namespace SteamAppinfo {
 
                 await logIn;
             } catch {
+                disconnected = true;
+
                 if (steamUser != null) {
                     steamUser.LogOff();
                 }
@@ -79,29 +84,42 @@ namespace SteamAppinfo {
         }
 
         void OnConnected(SteamClient.ConnectedCallback callback) {
-            Logger.LogInformation("Connected to Steam! Logging in '{0}'...", user);
+            if (user != null) {
+                Logger.LogInformation("Connected to Steam! Logging in '{0}'...", user);
 
-            byte[] sentryHash = null;
-            if (File.Exists("sentry.bin")) {
-                Logger.LogInformation("Loading saved sentry.bin...");
-                byte[] sentryFile = File.ReadAllBytes("sentry.bin");
-                sentryHash = CryptoHelper.SHAHash(sentryFile);
+                byte[] sentryHash = null;
+                if (File.Exists("sentry.bin")) {
+                    Logger.LogInformation("Loading saved sentry.bin...");
+                    byte[] sentryFile = File.ReadAllBytes("sentry.bin");
+                    sentryHash = CryptoHelper.SHAHash(sentryFile);
+                }
+
+                string loginKey = null;
+                if (File.Exists("loginkey.bin")) {
+                    Logger.LogInformation("Loading saved login key...");
+                    loginKey = File.ReadAllText("loginkey.bin");
+                }
+
+                steamUser.LogOn(new SteamUser.LogOnDetails {
+                    Username = user,
+                    Password = pass,
+                    AuthCode = guardCode,
+                    SentryFileHash = sentryHash,
+                    ShouldRememberPassword = true,
+                    LoginKey = loginKey,
+                });
+            } else {
+                Logger.LogInformation("Connected to Steam! Logging in anonymously...");
+                steamUser.LogOnAnonymous();
             }
+        }
 
-            string loginKey = null;
-            if (File.Exists("loginkey.bin")) {
-                Logger.LogInformation("Loading saved login key...");
-                loginKey = File.ReadAllText("loginkey.bin");
+        void OnDisconnected(SteamClient.DisconnectedCallback callback) {
+            Logger.LogInformation("Disconnected.");
+            if (!disconnected) {
+                Logger.LogInformation("Unexpected disconnection, preparing relog...");
+                loggedIn = false;
             }
-
-            steamUser.LogOn(new SteamUser.LogOnDetails {
-                Username = user,
-                Password = pass,
-                AuthCode = guardCode,
-                SentryFileHash = sentryHash,
-                ShouldRememberPassword = true,
-                LoginKey = loginKey,
-            });
         }
 
         void OnLoggedOn(SteamUser.LoggedOnCallback callback) {
@@ -116,7 +134,25 @@ namespace SteamAppinfo {
             });
         }
 
+        void OnLoggedOff(SteamUser.LoggedOffCallback callback) {
+            Logger.LogInformation("Logged off.");
+            if (!disconnected) {
+                Logger.LogInformation("Unexpected logoff, preparing relog...");
+                loggedIn = false;
+                if (steamClient.IsConnected) {
+                    Logger.LogInformation("Still connected, disconnecting...");
+                    steamClient.Disconnect();
+                }
+            }
+        }
+
         public async Task<SteamApps.PICSProductInfoCallback.PICSProductInfo> ProductInfo(uint app) {
+            if (manager != null) {
+                await Task.Run(() => {
+                    manager.RunWaitAllCallbacks(TimeSpan.Zero);
+                });
+            }
+
             if (!loggedIn) {
                 await connect();
             }
@@ -192,6 +228,8 @@ namespace SteamAppinfo {
 
         public void Dispose() {
             Logger.LogInformation("Disconnecting...");
+
+            disconnected = true;
 
             if (steamUser != null) {
                 steamUser.LogOff();
