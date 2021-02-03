@@ -20,6 +20,7 @@ namespace SteamAppinfo {
         string user;
         string pass;
         string guardCode;
+        string twoFactorCode;
 
         SteamUser steamUser;
         SteamApps steamApps;
@@ -34,6 +35,7 @@ namespace SteamAppinfo {
             user = Configuration["Steam:Username"];
             pass = Configuration["Steam:Password"];
             guardCode = Configuration["Steam:GuardCode"];
+            twoFactorCode = Configuration["Steam:TwoFactorCode"];
         }
 
         async Task connect() {
@@ -104,6 +106,7 @@ namespace SteamAppinfo {
                     Username = user,
                     Password = pass,
                     AuthCode = guardCode,
+                    TwoFactorCode = twoFactorCode,
                     SentryFileHash = sentryHash,
                     ShouldRememberPassword = true,
                     LoginKey = loginKey,
